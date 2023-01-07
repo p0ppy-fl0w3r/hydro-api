@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Hydro.Data;
 using Hydro.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -25,9 +26,11 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet]
-    public IEnumerable<ApplicationUser> GetAllUsers()
+    [Authorize]
+    [Route("verify")]
+    public IActionResult Verify()
     {
-        return _db.Users;
+        return Ok(true);
     }
 
 
@@ -35,7 +38,7 @@ public class AuthController : ControllerBase
     [Route("register")]
     public async Task<IActionResult> Register(RegisterModel model)
     {
-        var userExists = await _userManager.FindByNameAsync(model.Username ?? "");
+        var userExists = await _userManager.FindByNameAsync(model.Username);
         if (userExists != null)
         {
             return BadRequest("Username already exists.");
@@ -46,7 +49,9 @@ public class AuthController : ControllerBase
             Email = model.Email,
             SecurityStamp = Guid.NewGuid().ToString(),
             UserName = model.Username,
-            Age = model.Age
+            Age = model.Age,
+            FirstName = model.FirstName,
+            LastName = model.LastName
         };
 
         var result = await _userManager.CreateAsync(user, model.Password ?? "");
@@ -79,7 +84,9 @@ public class AuthController : ControllerBase
                     token = new JwtSecurityTokenHandler().WriteToken(token),
                     username = user.UserName,
                     email = user.Email,
-                    age = user.Age
+                    age = user.Age,
+                    firstName = user.FirstName,
+                    lastName = user.LastName
                 }
             );
         }
